@@ -1,0 +1,10 @@
+{
+  "Name": "农场主功能包",
+  "Author": "天岚",
+  "Version": "1.0.1",
+  "Description": "实现您的农场主梦！为游戏中添加好用的帮手们！",
+  "UniqueID": "EZ.BlackSlaves",
+  "EntryDll": "BlackSlaves.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}
