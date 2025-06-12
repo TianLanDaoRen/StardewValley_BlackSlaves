@@ -188,12 +188,6 @@ public class BlackSlave : NPC
             case JobType.GrabItem:
                 CollectItemToAutoGrabber(currentJob.Machine);
                 break;
-            case JobType.WaterCrop:
-            case JobType.MakeMayonnaise:
-            case JobType.MakeCheese:
-            case JobType.MakeFabric:
-            default:
-                throw new ArgumentOutOfRangeException();
         }
 
         currentJob.DoJob!.Invoke();
