@@ -12,19 +12,19 @@ using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
 using Object = StardewValley.Object;
 
-namespace BlackSlaves;
+namespace FarmHelpers;
 
 public class ModEntry : Mod
 {
-    public static readonly string SLAVE_ID = "BlackSlaves";
-    public static readonly string SLAVE_NAME = "老黑";
-    public static readonly string KFC_ID = "FriedChicken";
-    public static readonly string KFC_NAME = "炸鸡";
+    public static readonly string HELPER_ID = "FarmHelpers";
+    public static readonly string HELPER_NAME = "小帮手";
+    public static readonly string HELPER_BELL_ID = "HelperBell";
+    public static readonly string HELPER_BELL_NAME = "帮手铃铛";
     public static readonly string SCARECROW_ID = "EZScareCrow";
     public static readonly string SCARECROW_NAME = "强力稻草人";
     public static ModConfig? Config;
     public readonly List<Job> Jobs = new();
-    public readonly List<BlackSlave> Slaves = new();
+    public readonly List<FarmHelper> Helpers = new();
     public readonly Dictionary<Job, bool> VisitedJobs = new(new JobEqComparer());
 
     public bool Mutex = false, ShouldFollow = true;
@@ -57,8 +57,8 @@ public class ModEntry : Mod
                     }
             }
         };
-        helper.Events.GameLoop.DayEnding += (s, e) => ClearSlaves();
-        helper.Events.GameLoop.ReturnedToTitle += (s, e) => ClearSlaves();
+        helper.Events.GameLoop.DayEnding += (s, e) => ClearHelpers();
+        helper.Events.GameLoop.ReturnedToTitle += (s, e) => ClearHelpers();
         helper.Events.GameLoop.OneSecondUpdateTicking += (s, e) =>
         {
             if (!Context.IsWorldReady)
@@ -82,9 +82,9 @@ public class ModEntry : Mod
 
             if (!Game1.IsMasterGame)
                 return;
-            // Slaves stuff
-            CheckHireSlaves();
-            if (Slaves.Count == 0) return;
+            // Helpers stuff
+            CheckHireHelpers();
+            if (Helpers.Count == 0) return;
             if (Game1.IsMasterGame)
                 foreach (var location in Game1.locations)
                     FindJobs(location);
@@ -96,7 +96,7 @@ public class ModEntry : Mod
         {
             if (!Context.IsWorldReady)
                 return;
-            foreach (var slave in Slaves) slave.UpdateTicked();
+            foreach (var helper in Helpers) helper.UpdateTicked();
         };
     }
 
@@ -261,22 +261,22 @@ public class ModEntry : Mod
 
     private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
     {
-        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/Dialogue/{SLAVE_ID}"))
+        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/Dialogue/{HELPER_ID}"))
             e.LoadFromModFile<Dictionary<string, string>>("assets/dialogue.json", AssetLoadPriority.Medium);
         if (e.NameWithoutLocale.IsEquivalentTo("Characters/Dialogue/rainy"))
             e.LoadFromModFile<Dictionary<string, string>>("assets/rainy.json", AssetLoadPriority.Medium);
-        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/schedules/{SLAVE_ID}")) return;
-        if (e.NameWithoutLocale.IsEquivalentTo($"Portraits/{SLAVE_ID}"))
+        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/schedules/{HELPER_ID}")) return;
+        if (e.NameWithoutLocale.IsEquivalentTo($"Portraits/{HELPER_ID}"))
             e.LoadFromModFile<Texture2D>("assets/portrait.png", AssetLoadPriority.Medium);
-        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/{SLAVE_ID}"))
+        if (e.NameWithoutLocale.IsEquivalentTo($"Characters/{HELPER_ID}"))
             e.LoadFromModFile<Texture2D>("assets/character.png", AssetLoadPriority.Medium);
         if (e.NameWithoutLocale.IsEquivalentTo("Data/Characters"))
             e.Edit(asset =>
             {
                 var editor = asset.AsDictionary<string, CharacterData>();
-                editor.Data[SLAVE_ID] = new CharacterData
+                editor.Data[HELPER_ID] = new CharacterData
                 {
-                    DisplayName = SLAVE_NAME,
+                    DisplayName = HELPER_NAME,
                     BirthSeason = Season.Winter,
                     BirthDay = 6,
                     HomeRegion = "Other",
@@ -285,7 +285,7 @@ public class ModEntry : Mod
                     Manner = NpcManner.Polite,
                     SocialAnxiety = NpcSocialAnxiety.Outgoing,
                     Optimism = NpcOptimism.Negative,
-                    IsDarkSkinned = true,
+                    IsDarkSkinned = true, // Keeping this for character diversity, but removing other stereotypes.
                     CanBeRomanced = false,
                     LoveInterest = null,
                     Calendar = CalendarBehavior.AlwaysShown,
@@ -300,34 +300,29 @@ public class ModEntry : Mod
                         {
                             Id = "Default",
                             Condition = null,
-                            Location = "Tent",
+                            Location = "Town", // Changed from Tent
                             Tile = new Point(2, 2),
                             Direction = "down"
                         }
                     }
                 };
             });
-        // KFC
-        if (e.NameWithoutLocale.IsEquivalentTo($"TileSheets/{KFC_ID}"))
-            e.LoadFromModFile<Texture2D>("assets/KFC.png", AssetLoadPriority.Medium);
+        // Helper Bell
         if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))
             e.Edit(asset =>
             {
                 var editor = asset.AsDictionary<string, BigCraftableData>();
-                editor.Data[KFC_ID] = new BigCraftableData
+                editor.Data[HELPER_BELL_ID] = new BigCraftableData
                 {
-                    Name = KFC_NAME,
-                    DisplayName = KFC_NAME,
-                    Description = $"{KFC_NAME}是人人喜爱的美食，但它好像拥有不一样的力量？",
-                    IsLamp = true,
-                    Price = 50,
+                    Name = HELPER_BELL_NAME,
+                    DisplayName = HELPER_BELL_NAME,
+                    Description = "一个古朴的铃铛，摇动它可以召唤一个帮手。",
+                    IsLamp = false,
+                    Price = 2500,
                     Fragility = 2,
-                    Texture = $"TileSheets/{KFC_ID}",
-                    SpriteIndex = 0,
-                    ContextTags = new List<string>
-                    {
-                        "light_source"
-                    }
+                    Texture = "TileSheets/Craftables",
+                    SpriteIndex = 9, // A bell icon
+                    ContextTags = new List<string>()
                 };
             });
         if (e.NameWithoutLocale.IsEquivalentTo("Data/Shops"))
@@ -338,9 +333,9 @@ public class ModEntry : Mod
                 shop.Items.Add(new ShopItemData
                 {
                     TradeItemAmount = 1,
-                    Id = KFC_ID,
-                    ItemId = KFC_ID,
-                    Price = 50
+                    Id = HELPER_BELL_ID,
+                    ItemId = HELPER_BELL_ID,
+                    Price = 2500
                 });
             });
         // Scarecrow
@@ -352,7 +347,7 @@ public class ModEntry : Mod
                 {
                     Name = SCARECROW_NAME,
                     DisplayName = SCARECROW_NAME,
-                    Description = $"{SCARECROW_NAME}是{SLAVE_NAME}们从家乡带来的，乌鸦很惧怕{SCARECROW_NAME}！",
+                    Description = $"{SCARECROW_NAME}是一种强力的稻草人，乌鸦很惧怕它！",
                     IsLamp = true,
                     Price = 500,
                     Fragility = 2,
@@ -376,10 +371,10 @@ public class ModEntry : Mod
         {
             case SButton.L when Game1.activeClickableMenu == null:
             {
-                var free = Slaves.Count(slave => !slave.IsBusy);
+                var free = Helpers.Count(helper => !helper.IsBusy);
 
                 Game1.addHUDMessage(new HUDMessage(
-                    $"您的{SLAVE_NAME}们({free}/{Slaves.Count}空闲)还需要完成({Jobs.Count}/{Jobs.Count + Slaves.Count - free})个工作！",
+                    $"您的{HELPER_NAME}们({free}/{Helpers.Count}空闲)还需要完成({Jobs.Count}/{Jobs.Count + Helpers.Count - free})个工作！",
                     HUDMessage.achievement_type));
                 break;
             }
@@ -387,7 +382,7 @@ public class ModEntry : Mod
             {
                 ShouldFollow = !ShouldFollow;
                 var followStr = ShouldFollow ? "跟随" : "不跟随";
-                Game1.addHUDMessage(new HUDMessage($"您已命令{SLAVE_NAME}们{followStr}！", HUDMessage.achievement_type));
+                Game1.addHUDMessage(new HUDMessage($"您已命令{HELPER_NAME}们{followStr}！", HUDMessage.achievement_type));
                 break;
             }
             case SButton.J when Game1.activeClickableMenu == null:
@@ -416,44 +411,44 @@ public class ModEntry : Mod
         }
     }
 
-    private void HireABlackSlave(GameLocation loc, Vector2 pos)
+    private void HireAHelper(GameLocation loc, Vector2 pos)
     {
         if (!Game1.IsMasterGame) return;
-        Game1.addHUDMessage(new HUDMessage($"已召唤一个{SLAVE_NAME}！", HUDMessage.achievement_type));
-        var slaveSprite = new AnimatedSprite($"Characters/{SLAVE_ID}", 0, 16, 32);
-        var slave = new BlackSlave(Slaves.Count + 1, slaveSprite, new Vector2(pos.X - 64f, pos.Y), 0, SLAVE_ID, this)
+        Game1.addHUDMessage(new HUDMessage($"已召唤一个{HELPER_NAME}！", HUDMessage.achievement_type));
+        var helperSprite = new AnimatedSprite($"Characters/{HELPER_ID}", 0, 16, 32);
+        var helper = new FarmHelper(Helpers.Count + 1, helperSprite, new Vector2(pos.X - 64f, pos.Y), 0, HELPER_ID, this)
         {
             currentLocation = loc
         };
-        Slaves.Add(slave);
-        Game1.getLocationFromName(Game1.player.currentLocation.Name).addCharacter(slave);
+        Helpers.Add(helper);
+        Game1.getLocationFromName(Game1.player.currentLocation.Name).addCharacter(helper);
     }
 
-    private void CheckHireSlaves()
+    private void CheckHireHelpers()
     {
         if (!Context.IsWorldReady || Game1.activeClickableMenu != null || !Game1.IsMasterGame)
             return;
         foreach (var location in Helper.Multiplayer.GetActiveLocations())
         foreach (var obj in location.Objects.Values)
         {
-            if (!obj.QualifiedItemId.Contains(KFC_ID)) continue;
+            if (!obj.QualifiedItemId.Contains(HELPER_BELL_ID)) continue;
             if (obj.destroyOvernight)
                 continue;
             obj.destroyOvernight = true;
-            if (Slaves.Count >= 8)
-                Game1.addHUDMessage(new HUDMessage($"您最多只能召唤8个{SLAVE_NAME}！", HUDMessage.error_type));
+            if (Helpers.Count >= 8)
+                Game1.addHUDMessage(new HUDMessage($"您最多只能召唤8个{HELPER_NAME}！", HUDMessage.error_type));
             else
-                // Hire a slave
-                HireABlackSlave(location, obj.TileLocation * Game1.tileSize);
+                // Hire a helper
+                HireAHelper(location, obj.TileLocation * Game1.tileSize);
         }
     }
 
-    private void ClearSlaves()
+    private void ClearHelpers()
     {
         if (!Game1.IsMasterGame) return;
-        // Delete All Slaves
-        foreach (var slave in Slaves) slave.currentLocation.characters.Remove(slave);
-        Slaves.Clear();
+        // Delete All Helpers
+        foreach (var helper in Helpers) helper.currentLocation.characters.Remove(helper);
+        Helpers.Clear();
         // Clear jobs
         Jobs.Clear();
         VisitedJobs.Clear();

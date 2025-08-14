@@ -1,4 +1,4 @@
-﻿namespace BlackSlaves;
+﻿namespace FarmHelpers;
 
 public sealed class ModConfig
 {

@@ -7,9 +7,9 @@ using StardewValley.Pathfinding;
 using StardewValley.TerrainFeatures;
 using Object = StardewValley.Object;
 
-namespace BlackSlaves;
+namespace FarmHelpers;
 
-public class BlackSlave : NPC
+public class FarmHelper : NPC
 {
     private readonly ModEntry? Entry;
     private readonly int MAX_RANGE = 1;
@@ -18,7 +18,7 @@ public class BlackSlave : NPC
     public bool IsBusy;
     private int stuckTries;
 
-    public BlackSlave()
+    public FarmHelper()
     {
         Entry = null;
         IsBusy = false;
@@ -26,7 +26,7 @@ public class BlackSlave : NPC
         controller = null;
     }
 
-    public BlackSlave(int id, AnimatedSprite sprite, Vector2 position, int facingDir, string name, ModEntry entry,
+    public FarmHelper(int id, AnimatedSprite sprite, Vector2 position, int facingDir, string name, ModEntry entry,
         LocalizedContentManager? content = null) : base(sprite, position, facingDir, name, content)
     {
         Entry = entry;
@@ -45,7 +45,7 @@ public class BlackSlave : NPC
             return;
         }
 
-        // Slave is now Free
+        // Helper is now Free
         if (Entry.Jobs.Count == 0)
             FreeTime(Entry.ShouldFollow);
         else
@@ -98,15 +98,15 @@ public class BlackSlave : NPC
         if (Entry is null) return;
         //var TYPE = isJob ? "工作行走" : "空闲行走";
         Speed = Game1.random.Next(4, 9);
-        // Slave is currently being stuck
+        // Helper is currently being stuck
         if (controller is not null && !isMoving()) stuckTries++;
         if (stuckTries >= 100)
         {
             if (isJob)
-                //Entry.Monitor.Log($"{TYPE} {ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 被卡住，传送至任务！", StardewModdingAPI.LogLevel.Warn);
+                //Entry.Monitor.Log($"{TYPE} {ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 被卡住，传送至任务！", StardewModdingAPI.LogLevel.Warn);
                 Game1.warpCharacter(this, loc, tilePoint.ToVector2());
             else
-                //Entry.Monitor.Log($"{TYPE} {ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 被卡住，传送至玩家方位！", StardewModdingAPI.LogLevel.Warn);
+                //Entry.Monitor.Log($"{TYPE} {ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 被卡住，传送至玩家方位！", StardewModdingAPI.LogLevel.Warn);
                 // Teleport to player's position
                 Game1.warpCharacter(this, Game1.player.currentLocation, Game1.player.TilePoint.ToVector2());
             stuckTries = 0;
@@ -129,13 +129,13 @@ public class BlackSlave : NPC
             NPCSchedule = true,
             nonDestructivePathing = true
         };
-        // Slave can't walk to target
+        // Helper can't walk to target
         if (controller?.pathToEndPoint is { Count: > 0 }) return;
         // Teleport to target
         Game1.warpCharacter(this, loc, tilePoint.ToVector2());
         // JobTime, make job done already
         if (isJob && currentJob is not null)
-            //Entry.Monitor.Log($"{TYPE} {ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 无法走到[{tilePoint}@{loc.Name}]，直接完成工作！", StardewModdingAPI.LogLevel.Warn);
+            //Entry.Monitor.Log($"{TYPE} {ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 无法走到[{tilePoint}@{loc.Name}]，直接完成工作！", StardewModdingAPI.LogLevel.Warn);
             DoingJob();
     }
 
@@ -169,7 +169,7 @@ public class BlackSlave : NPC
     public void ReadyForJob(Job? job)
     {
         if (Entry is null || job is null) return;
-        //Entry.Monitor.Log($"{ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 准备去[{job.JobPoint}@{job.JobLocation}]进行{job.JobType}工作！");
+        //Entry.Monitor.Log($"{ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 准备去[{job.JobPoint}@{job.JobLocation}]进行{job.JobType}工作！");
         IsBusy = true;
         currentJob = job;
         stuckTries = 0;
@@ -179,7 +179,7 @@ public class BlackSlave : NPC
     public void DoingJob()
     {
         if (Entry is null || currentJob is null) return;
-        //Entry.Monitor.Log($"{ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 正在[{currentJob.JobPoint}@{currentJob.JobLocation}]进行{currentJob.JobType}工作！");
+        //Entry.Monitor.Log($"{ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 正在[{currentJob.JobPoint}@{currentJob.JobLocation}]进行{currentJob.JobType}工作！");
         switch (currentJob.JobType)
         {
             case JobType.CollectCrop:
@@ -191,9 +191,9 @@ public class BlackSlave : NPC
         }
 
         currentJob.DoJob!.Invoke();
-        //Entry.Monitor.Log($"{ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 做了[{currentJob.JobPoint}@{currentJob.JobLocation}]的{currentJob.JobType}工作！");
+        //Entry.Monitor.Log($"{ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 做了[{currentJob.JobPoint}@{currentJob.JobLocation}]的{currentJob.JobType}工作！");
         if (currentJob.IsJobDone!.Invoke())
-            //Entry.Monitor.Log($"{ModEntry.SLAVE_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 完成了[{currentJob.JobPoint}@{currentJob.JobLocation}]的{currentJob.JobType}工作！");
+            //Entry.Monitor.Log($"{ModEntry.HELPER_NAME}#{ID}[{TilePoint}@{currentLocation.Name}] 完成了[{currentJob.JobPoint}@{currentJob.JobLocation}]的{currentJob.JobType}工作！");
             AfterDoneJob();
     }
 

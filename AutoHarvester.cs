@@ -3,7 +3,7 @@ using StardewValley.Characters;
 using StardewValley.Menus;
 using StardewValley.Objects;
 
-namespace BlackSlaves;
+namespace FarmHelpers;
 
 public class AutoHarvester : JunimoHarvester
 {

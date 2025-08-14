@@ -3,7 +3,7 @@ using StardewValley;
 using StardewValley.TerrainFeatures;
 using Object = StardewValley.Object;
 
-namespace BlackSlaves;
+namespace FarmHelpers;
 
 public enum JobType
 {
